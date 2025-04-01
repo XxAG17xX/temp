@@ -1,0 +1,36 @@
+stages:
+  - build
+  - test
+
+variables:
+  BUILD_DIR: "build"
+  DEBIAN_FRONTEND: "noninteractive"
+
+image: ubuntu:latest
+
+before_script:
+  - apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y cmake make clang git linux-headers-generic
+  - cmake --version
+  - git --version
+
+build:
+  stage: build
+  tags:
+  - docker
+  script:
+    - cmake -S . -B $BUILD_DIR
+    - cd $BUILD_DIR 
+    - make -j$(nproc)
+  artifacts:
+    paths:
+      - $BUILD_DIR
+
+test:
+  stage: test
+  tags:
+  - docker
+  script:
+    - cd $BUILD_DIR
+    - ctest --output-on-failure
+  dependencies:
+    - build
